@@ -3,7 +3,9 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Hiding
+  - Disappear
   layers:
   - Default
   - TransparentFX
@@ -12,10 +14,10 @@ TagManager:
   - Water
   - UI
   - 
-  - 
-  - 
-  - 
-  - 
+  - Hiding
+  - BackGround
+  - Player
+  - Ground
   - 
   - 
   - 
@@ -40,4 +42,16 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Hiding
+    uniqueID: 3328043169
+    locked: 0
+  - name: BackGround
+    uniqueID: 368876273
+    locked: 0
+  - name: Player
+    uniqueID: 4123734729
+    locked: 0
+  - name: Ground
+    uniqueID: 959628639
     locked: 0
