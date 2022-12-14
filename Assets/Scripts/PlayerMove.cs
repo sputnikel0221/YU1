@@ -32,7 +32,7 @@ public class PlayerMove : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
         isEnterSecret = 0;
-        onLedder=false;
+        onLedder = false;
         playerGravity = rigid.gravityScale;
 
         mainCamera = GameObject.Find("Main Camera");
@@ -44,11 +44,17 @@ public class PlayerMove : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Jump
-        if (Input.GetButtonDown("Jump") && !animator.GetBool("isJumping"))
+        //Jump and DoubleJump
+        if (Input.GetButtonDown("Jump"))
         {
-            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            animator.SetBool("isJumping", true);
+            if(!animator.GetBool("isJumping")){
+                rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+                animator.SetBool("isJumping", true);
+            } 
+            else if(animator.GetBool("addJump")){
+                rigid.AddForce(Vector2.up * jumpPower * 1.2f, ForceMode2D.Impulse);
+                animator.SetBool("addJump", false);
+            }
         }
 
         //decSpeed
@@ -71,11 +77,12 @@ public class PlayerMove : MonoBehaviour
         else animator.SetBool("isRunning", true);
 
         //onLedder
-        if(onLedder){
+        if (onLedder)
+        {
             rigid.gravityScale = 0.5f;
             float vy = Input.GetAxisRaw("Vertical");
             rigid.velocity = new Vector2(rigid.velocity.x, vy);
-        } 
+        }
     }
 
     void FixedUpdate()
@@ -104,7 +111,7 @@ public class PlayerMove : MonoBehaviour
         }
 
         //watch Up , y = 0
-        if (Input.GetButton("Up") && rigid.velocity.y==0)
+        if (Input.GetButton("Up") && rigid.velocity.y == 0)
         {
             cameraUp++;
             // Debug.Log(cameraUp);
@@ -122,10 +129,34 @@ public class PlayerMove : MonoBehaviour
 
     }
 
+    //Items or Enemies
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        switch (other.gameObject.tag)
+        {
+            case "Cherry":
+                animator.SetBool("addJump",true);
+                other.gameObject.SetActive(false);
+                break;
+            case "Gem":
+                Animator gemAnimator = other.gameObject.GetComponent<Animator>();
+                gemAnimator.SetBool("isGet",true);
+                // Invoke("RemoveObj(other)",1);
+                StartCoroutine(RemoveObj(other.gameObject));
+                break;
+        }
+    }
+
+    //Remove GameObject after 0.4f
+    IEnumerator RemoveObj(GameObject obj){
+        yield return new WaitForSeconds(0.4f);
+        obj.SetActive(false);
+    }
+
+
     //Switch and Door
     void OnTriggerStay2D(Collider2D other)
     {
-
         switch (other.gameObject.tag)
         {
             case "Switch":
@@ -135,14 +166,15 @@ public class PlayerMove : MonoBehaviour
                 }
                 break;
             case "Door":
-                if(Input.GetButton("Select")){
+                if (Input.GetButton("Select"))
+                {
                     SceneManager.LoadScene("Tower");
                 }
                 break;
             case "Ledder":
                 onLedder = true;
                 break;
-        }     
+        }
     }
 
     void OnTriggerExit2D(Collider2D other)
@@ -166,8 +198,8 @@ public class PlayerMove : MonoBehaviour
             }
         }
 
-        //제대로 작동할까
-        if(other.gameObject.tag == "Ledder"){
+        if (other.gameObject.tag == "Ledder")
+        {
             onLedder = false;
             rigid.gravityScale = playerGravity;
         }
@@ -201,3 +233,15 @@ public class PlayerMove : MonoBehaviour
 
 //Dont Destroy
 //https://chameleonstudio.tistory.com/57
+
+//Invoke는 매개변수 안됨
+//https://wonsang98.tistory.com/220
+
+//코루틴
+//https://eunjin3786.tistory.com/515
+
+//코루틴 예제
+//https://clack.tistory.com/50
+
+//코루틴 해결
+//https://coding-of-today.tistory.com/171
