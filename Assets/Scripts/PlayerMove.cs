@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerMove : MonoBehaviour
 {
@@ -12,11 +13,31 @@ public class PlayerMove : MonoBehaviour
     public float decSpeed;
     public float jumpPower;
 
+    public GameObject secret;
+    int isEnterSecret;
+
+    public SwitchWork switchWork;
+
+    public int cameraUp;
+    public CameraController cam;
+
+    GameObject mainCamera;
+
+    bool onLedder;
+    float playerGravity;
+
     void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+        isEnterSecret = 0;
+        onLedder=false;
+        playerGravity = rigid.gravityScale;
+
+        mainCamera = GameObject.Find("Main Camera");
+        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(mainCamera);
     }
 
 
@@ -49,8 +70,12 @@ public class PlayerMove : MonoBehaviour
         }
         else animator.SetBool("isRunning", true);
 
-
-
+        //onLedder
+        if(onLedder){
+            rigid.gravityScale = 0.5f;
+            float vy = Input.GetAxisRaw("Vertical");
+            rigid.velocity = new Vector2(rigid.velocity.x, vy);
+        } 
     }
 
     void FixedUpdate()
@@ -77,21 +102,76 @@ public class PlayerMove : MonoBehaviour
                 }
             }
         }
+
+        //watch Up , y = 0
+        if (Input.GetButton("Up") && rigid.velocity.y==0)
+        {
+            cameraUp++;
+            // Debug.Log(cameraUp);
+            if (cameraUp / 50 > 0.5)
+            {
+                cam.WatchUp();
+                cameraUp = 0;
+                // Debug.Log(cameraUp);
+            }
+        }
+        else
+        {
+            cameraUp = 0;
+        }
+
+    }
+
+    //Switch and Door
+    void OnTriggerStay2D(Collider2D other)
+    {
+
+        switch (other.gameObject.tag)
+        {
+            case "Switch":
+                if (Input.GetButton("Select"))
+                {
+                    switchWork.Work();
+                }
+                break;
+            case "Door":
+                if(Input.GetButton("Select")){
+                    SceneManager.LoadScene("Tower");
+                }
+                break;
+            case "Ledder":
+                onLedder = true;
+                break;
+        }     
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        //만약 부딪힌게 Disappear Tag시, 사라짐
+        //Hiding오브젝트와 충돌시, show seceret room
         if (other.gameObject.tag == "Hiding")
         {
-            GameObject[] secret = GameObject.FindGameObjectsWithTag("Disappear");
-            foreach (GameObject obj in secret)
+            // Debug.Log("일단 hiding과 충돌한것은 맞음");
+            if (isEnterSecret <= 2)
             {
-                obj.SetActive(false);
-
+                // Debug.Log("조건에 맞는경우");
+                secret.SetActive(false);
+                isEnterSecret++;
+                // Debug.Log(isEnterSecret);
             }
-
+            else if (isEnterSecret > 2)
+            {
+                // Debug.Log("조건에 맞지 않는 경우");
+                secret.SetActive(true);
+                isEnterSecret = 0;
+            }
         }
+
+        //제대로 작동할까
+        if(other.gameObject.tag == "Ledder"){
+            onLedder = false;
+            rigid.gravityScale = playerGravity;
+        }
+
     }
 }
 
@@ -101,8 +181,23 @@ public class PlayerMove : MonoBehaviour
 //특정 객체 알아내기
 //https://allaboutmakers.tistory.com/32
 
-//비활성화 후 활성화 시키는 법
+//비활성화 후 활성화 시키는 법 = 이건 폐기
 //https://answers.unity.com/questions/1089570/how-do-you-activate-a-game-object.html
 
 //trigger에 관해.. 왜 다시 부딪혀도 true가 되는거지
 //https://answers.unity.com/questions/682296/triggering-only-once.html
+
+//비밀방 해결
+//https://forum.unity.com/threads/ontriggerenter-is-called-twice-sometimes.95187/
+
+//Composite
+// https://yung.tistory.com/entry/Unity-2D-%EA%B2%8C%EC%9E%84-%EA%B0%9C%EB%B0%9C-%ED%8A%9C%ED%86%A0%EB%A6%AC%EC%96%BC-%EC%A7%80%ED%98%95-%EC%88%98%EC%A0%95%ED%95%98%EA%B8%B0
+
+//camaera객체 가져오기
+//https://jhc777.tistory.com/entry/Camera%EB%A5%BC-%EB%B0%94%EA%BF%94%EB%B3%B4%EC%9E%90
+
+//camera 무빙 나중에
+//https://timeboxstory.tistory.com/108
+
+//Dont Destroy
+//https://chameleonstudio.tistory.com/57

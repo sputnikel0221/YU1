@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Hiding
   - Disappear
+  - Switch
+  - Door
+  - Ledder
   layers:
   - Default
   - TransparentFX
@@ -49,9 +52,9 @@ TagManager:
   - name: BackGround
     uniqueID: 368876273
     locked: 0
-  - name: Player
-    uniqueID: 4123734729
-    locked: 0
   - name: Ground
     uniqueID: 959628639
+    locked: 0
+  - name: Player
+    uniqueID: 4123734729
     locked: 0
