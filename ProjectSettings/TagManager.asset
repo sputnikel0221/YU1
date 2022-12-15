@@ -11,6 +11,9 @@ TagManager:
   - Ledder
   - Cherry
   - Gem
+  - Enemy
+  - Bat
+  - EndDoor
   layers:
   - Default
   - TransparentFX
@@ -23,8 +26,8 @@ TagManager:
   - BackGround
   - Player
   - Ground
-  - 
-  - 
+  - Front
+  - PlayerBlink
   - 
   - 
   - 

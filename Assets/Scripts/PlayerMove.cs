@@ -26,6 +26,12 @@ public class PlayerMove : MonoBehaviour
     bool onLedder;
     float playerGravity;
 
+    public int blinkCount;
+    public float blinkDelay;
+
+    public GameManager gameManager;
+    GameObject gameUI;
+
     void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
@@ -34,10 +40,14 @@ public class PlayerMove : MonoBehaviour
         isEnterSecret = 0;
         onLedder = false;
         playerGravity = rigid.gravityScale;
+        blinkCount = 0;
 
         mainCamera = GameObject.Find("Main Camera");
+        gameUI = GameObject.Find("GameUI");
         DontDestroyOnLoad(gameObject);
         DontDestroyOnLoad(mainCamera);
+        DontDestroyOnLoad(gameUI);
+        DontDestroyOnLoad(gameManager);
     }
 
 
@@ -47,13 +57,16 @@ public class PlayerMove : MonoBehaviour
         //Jump and DoubleJump
         if (Input.GetButtonDown("Jump"))
         {
-            if(!animator.GetBool("isJumping")){
+            if (!animator.GetBool("isJumping"))
+            {
                 rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
                 animator.SetBool("isJumping", true);
-            } 
-            else if(animator.GetBool("addJump")){
+            }
+            else if (animator.GetBool("addJump"))
+            {
                 rigid.AddForce(Vector2.up * jumpPower * 1.2f, ForceMode2D.Impulse);
                 animator.SetBool("addJump", false);
+                gameManager.DoubleJump(animator.GetBool("addJump"));
             }
         }
 
@@ -135,12 +148,14 @@ public class PlayerMove : MonoBehaviour
         switch (other.gameObject.tag)
         {
             case "Cherry":
-                animator.SetBool("addJump",true);
+                animator.SetBool("addJump", true);
+                gameManager.DoubleJump(animator.GetBool("addJump"));
                 other.gameObject.SetActive(false);
+                gameManager.AddScore();
                 break;
             case "Gem":
                 Animator gemAnimator = other.gameObject.GetComponent<Animator>();
-                gemAnimator.SetBool("isGet",true);
+                gemAnimator.SetBool("isGet", true);
                 // Invoke("RemoveObj(other)",1);
                 StartCoroutine(RemoveObj(other.gameObject));
                 break;
@@ -148,7 +163,10 @@ public class PlayerMove : MonoBehaviour
     }
 
     //Remove GameObject after 0.4f
-    IEnumerator RemoveObj(GameObject obj){
+    IEnumerator RemoveObj(GameObject obj)
+    {
+        gameManager.AddScore();
+        gameManager.AddScore();
         yield return new WaitForSeconds(0.4f);
         obj.SetActive(false);
     }
@@ -173,6 +191,15 @@ public class PlayerMove : MonoBehaviour
                 break;
             case "Ledder":
                 onLedder = true;
+                break;
+            case "EndDoor":
+                if (Input.GetButton("Select"))
+                {
+                    Destroy(gameObject);
+                    Destroy(mainCamera);
+                    Destroy(gameUI);
+                    SceneManager.LoadScene("EndScene");
+                }
                 break;
         }
     }
@@ -202,6 +229,63 @@ public class PlayerMove : MonoBehaviour
         {
             onLedder = false;
             rigid.gravityScale = playerGravity;
+        }
+
+    }
+
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.tag == "Enemy")
+        {
+            if (rigid.velocity.y < 0 && transform.position.y > other.transform.position.y)
+            {
+                Animator enemyAnimator = other.gameObject.GetComponent<Animator>();
+                rigid.AddForce(Vector2.up * 1.8f, ForceMode2D.Impulse);
+                enemyAnimator.SetBool("isHit", true);
+                StartCoroutine(RemoveObj(other.gameObject));
+            }
+            else
+            {
+                PlayerHit();
+                gameManager.HPDown();
+            }
+        }
+    }
+
+
+    //player 깜빡이는 Blink실행
+    void PlayerHit()
+    {
+        gameObject.layer = LayerMask.NameToLayer("PlayerBlink");
+        StartCoroutine("Blink", blinkDelay);
+        // HP--;
+    }
+
+    //delayTime만큼 깜빡임 지연, blinkCount가 6이면, 3번 깜-빡거린 것이므로 Reset Layer & Color
+    IEnumerator Blink(float delayTime)
+    {
+        Debug.Log("Enter 코루틴");
+        while (true)
+        {
+            if (blinkCount % 2 == 0)
+            {
+                spriteRenderer.color = new Color(1, 1, 1, 0.3f);
+            }
+            else
+            {
+                spriteRenderer.color = new Color(1, 1, 1, 0.6f);
+            }
+            blinkCount++;
+
+            if (blinkCount == 6)
+            {
+                spriteRenderer.color = new Color(1, 1, 1, 1);
+                gameObject.layer = LayerMask.NameToLayer("Player");
+                blinkCount = 0;
+                break;
+            }
+
+            yield return new WaitForSeconds(delayTime);
         }
 
     }
@@ -240,8 +324,17 @@ public class PlayerMove : MonoBehaviour
 //코루틴
 //https://eunjin3786.tistory.com/515
 
-//코루틴 예제
+//코루틴 예제 - 지연실행
 //https://clack.tistory.com/50
 
 //코루틴 해결
 //https://coding-of-today.tistory.com/171
+
+//레이어에 관해
+//https://bloodstrawberry.tistory.com/744
+
+//유니티 지연에 관한것
+//https://sylvester127.tistory.com/2
+
+//UI
+//https://www.youtube.com/watch?v=IuuKUaZQiSU

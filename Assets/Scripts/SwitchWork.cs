@@ -8,7 +8,6 @@ public class SwitchWork : MonoBehaviour
     public Sprite worked;
     GameObject door;
     
-    
     void Awake()
     {
         door = GameObject.FindGameObjectWithTag("Door");
